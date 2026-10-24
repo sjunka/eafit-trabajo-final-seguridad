@@ -124,7 +124,10 @@ footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padd
     <div class="tool"><b>OWASP ZAP 2.17.0</b><span>/Applications/ZAP.app · zap.sh</span><span class="st host">host · listo</span></div>
     <div class="tool"><b>SonarQube 9.9 LTS</b><span>docker · localhost:9000</span><span class="st up">running</span></div>
     <div class="tool"><b>sonar-scanner 8.2</b><span>brew · CLI</span><span class="st host">host · listo</span></div>
+    <div class="tool"><b>DVWA</b><span>docker · localhost:8080</span><span class="st up">running</span></div>
+    <div class="tool"><b>OWASP Juice Shop</b><span>docker · localhost:3000</span><span class="st up">running</span></div>
   </div>
+  <div class="warn"><strong>Procedencia de las evidencias.</strong><span>Las capturas de ejecución de abajo se tomaron sobre DVWA y Juice Shop corriendo en Docker: las mismas aplicaciones que empaqueta la VM del curso. Al terminar de montar el appliance en VMware se repiten contra la IP asignada. Ninguna captura está fabricada.</span></div>
   <figure>
     <img src="img/evidencia-sonarqube.png" alt="Pantalla de login de SonarQube 9.9 corriendo en localhost:9000">
     <figcaption>SonarQube 9.9 LTS corriendo en <code>localhost:9000</code> (contenedor Docker). Login inicial <code>admin</code> / <code>admin</code> en instalación propia; en la VM del curso la clave es <code>websecuritytesting</code>.</figcaption>
@@ -189,7 +192,7 @@ open *.vmx                            # abre en VMware Fusion</pre></div>
       <h3>Extraer credenciales</h3>
       <div class="code"><button type="button">Copiar</button><pre>1' UNION SELECT user, password FROM users-- -</pre></div>
       <p>Trae usuario y hash MD5. El de <code>admin</code> es <code>5f4dcc3b5aa765d61d8327deb882cf99</code> (= <code>password</code>), crackeable por diccionario.</p>
-      <figure><div class="pending"><b>Captura pendiente</b><span>Pantalla de SQL Injection con cada payload y su resultado (usuarios y hashes).</span></div></figure>
+      <figure><img src="img/dvwa-union.png" alt="Salida del UNION SELECT user,password FROM users en DVWA: 5 cuentas con su hash MD5"><figcaption>Ejecución real sobre DVWA (Docker, Security: Low). El UNION devuelve las 5 cuentas con su hash MD5; <code>5f4dcc…</code> = <code>password</code>.</figcaption></figure>
       <div class="say">El filtro de nivel High usa <code>mysqli_real_escape_string</code> y <code>LIMIT 1</code>, una mitigación frágil; la defensa real son consultas parametrizadas con binding.</div>
     </div></li>
   </ol>
@@ -223,7 +226,7 @@ sqlmap -u "..." --cookie="..." -T users --dump --batch</pre></div>
       <div class="code"><button type="button">Copiar</button><pre>sqlmap -u "http://&lt;IP&gt;/mutillidae/index.php?page=user-info.php&amp;username=1&amp;password=1&amp;user-info-php-submit-button=View+Account+Details" \
   --cookie="PHPSESSID=xxxx" -p username -D owasp10 -T credit_cards --dump --batch</pre></div>
       <p>Columnas de <code>credit_cards</code>: <code>ccid, ccnumber, ccv, expiration</code>.</p>
-      <figure><div class="pending"><b>Captura pendiente</b><span>Salida de SQLMap con el dump de <code>credit_cards</code> sobre la VM.</span></div></figure>
+      <figure><img src="img/sqlmap-dump.png" alt="SQLMap volcando la tabla dvwa.users con 5 registros y contraseñas crackeadas"><figcaption>Ejecución real de SQLMap sobre DVWA (Docker). Detecta la inyección en el parámetro <code>id</code>, vuelca <code>dvwa.users</code> y crackea los hashes (<code>password</code>, <code>abc123</code>, <code>charley</code>, <code>letmein</code>). El dump de <code>credit_cards</code> en Mutillidae se añade al montar esa app.</figcaption></figure>
       <div class="say">La misma extracción, hecha a mano con UNION, ya está verificada en <a href="evidencias/sqli-mutillidae.md">evidencias/sqli-mutillidae.md</a>: confirma el esquema y el resultado que SQLMap reproduce.</div>
     </div></li>
   </ol>
@@ -253,7 +256,8 @@ sqlmap -u "..." --cookie="..." -T users --dump --batch</pre></div>
         </tbody>
       </table></div>
       <p>El buscador es el caso canónico (Angular con bypass del sanitizador). Confirmar el total exacto en la versión de la instancia (<code>#/about</code>).</p>
-      <figure><div class="pending"><b>Captura pendiente</b><span>Cada XSS de Juice Shop con su URL, payload y el <em>alert</em>.</span></div></figure>
+      <figure><img src="img/js-xss.png" alt="Juice Shop confirma el reto DOM XSS resuelto con iframe javascript:alert; el buscador refleja el payload inyectado"><figcaption>Ejecución real sobre Juice Shop (Docker). El banner verde confirma el reto <em>DOM XSS</em> resuelto y el buscador refleja el HTML inyectado sin sanear.</figcaption></figure>
+      <figure><img src="img/js-home.png" alt="OWASP Juice Shop corriendo en localhost:3000"><figcaption>Juice Shop corriendo (<code>localhost:3000</code>), la misma app que trae la VM del curso.</figcaption></figure>
     </div></li>
   </ol>
   <div class="warn"><strong>Control.</strong><span>Codificación de salida según contexto, <code>Content-Security-Policy</code> y cookies <code>HttpOnly</code>. En DVWA High, <code>htmlspecialchars()</code> corta el reflejo.</span></div>
@@ -338,9 +342,9 @@ sonar-scanner -Dsonar.projectKey=mutillidae -Dsonar.sources=. \
     <thead><tr><th>Parte</th><th>Método</th><th>Evidencia</th></tr></thead>
     <tbody>
       <tr><td>1 VMs</td><td>documentado</td><td>captura al arrancar la VM</td></tr>
-      <tr><td>2 SQLi manual</td><td>payloads listos</td><td>captura en DVWA</td></tr>
-      <tr><td>3 SQLMap + tarjetas</td><td>comandos listos</td><td>evidencia manual previa ✓ · dump SQLMap pendiente</td></tr>
-      <tr><td>4 XSS</td><td>payloads y localizaciones</td><td>capturas DVWA + Juice Shop</td></tr>
+      <tr><td>2 SQLi manual</td><td>payloads listos</td><td>UNION ejecutado en DVWA ✓</td></tr>
+      <tr><td>3 SQLMap + tarjetas</td><td>comandos listos</td><td>dump SQLMap de dvwa.users ✓ · credit_cards Mutillidae pendiente</td></tr>
+      <tr><td>4 XSS</td><td>payloads y localizaciones</td><td>DOM XSS Juice Shop ✓ · alert DVWA pendiente</td></tr>
       <tr><td>5 ZAP</td><td>procedimiento listo</td><td>alertas del scan</td></tr>
       <tr><td>6 SonarQube</td><td>comandos listos · servidor corriendo ✓</td><td>Issues DVWA + Mutillidae</td></tr>
     </tbody>
