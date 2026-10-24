@@ -226,7 +226,8 @@ sqlmap -u "..." --cookie="..." -T users --dump --batch</pre></div>
       <div class="code"><button type="button">Copiar</button><pre>sqlmap -u "http://&lt;IP&gt;/mutillidae/index.php?page=user-info.php&amp;username=1&amp;password=1&amp;user-info-php-submit-button=View+Account+Details" \
   --cookie="PHPSESSID=xxxx" -p username -D owasp10 -T credit_cards --dump --batch</pre></div>
       <p>Columnas de <code>credit_cards</code>: <code>ccid, ccnumber, ccv, expiration</code>.</p>
-      <figure><img src="img/sqlmap-dump.png" alt="SQLMap volcando la tabla dvwa.users con 5 registros y contraseñas crackeadas"><figcaption>Ejecución real de SQLMap sobre DVWA (Docker). Detecta la inyección en el parámetro <code>id</code>, vuelca <code>dvwa.users</code> y crackea los hashes (<code>password</code>, <code>abc123</code>, <code>charley</code>, <code>letmein</code>). El dump de <code>credit_cards</code> en Mutillidae se añade al montar esa app.</figcaption></figure>
+      <figure><img src="img/sqlmap-dump.png" alt="SQLMap volcando la tabla dvwa.users con 5 registros y contraseñas crackeadas"><figcaption>Ejecución real de SQLMap sobre DVWA (Docker). Detecta la inyección en el parámetro <code>id</code>, vuelca <code>dvwa.users</code> y crackea los hashes (<code>password</code>, <code>abc123</code>, <code>charley</code>, <code>letmein</code>).</figcaption></figure>
+      <figure><img src="img/mutillidae-cards.png" alt="UNION SELECT sobre credit_cards de Mutillidae: 5 tarjetas con número, CVV y expiración"><figcaption>Objetivo de la parte 3, ejecutado real sobre Mutillidae (Docker, Security 0). El UNION sobre <code>credit_cards</code> devuelve las 5 tarjetas (número, CVV, expiración). Son datos de prueba de Mutillidae, no tarjetas reales.</figcaption></figure>
       <div class="say">La misma extracción, hecha a mano con UNION, ya está verificada en <a href="evidencias/sqli-mutillidae.md">evidencias/sqli-mutillidae.md</a>: confirma el esquema y el resultado que SQLMap reproduce.</div>
     </div></li>
   </ol>
@@ -277,7 +278,7 @@ sqlmap -u "..." --cookie="..." -T users --dump --batch</pre></div>
       <h3>Leer las alertas por severidad</h3>
       <p class="path">ZAP › pestaña Alerts</p>
       <p>Hallazgos típicos: cabeceras de seguridad ausentes (<code>Content-Security-Policy</code>, <code>X-Content-Type-Options</code>), cookie sin <code>HttpOnly</code>, SRI faltante, divulgación de versión, y XSS/SQLi reflejados según el spider.</p>
-      <figure><div class="pending"><b>Captura pendiente</b><span>Panel de alertas y un pantallazo por ítem con su detalle (la guía pide uno por hallazgo).</span></div></figure>
+      <figure><img src="img/zap-report.png" alt="Informe de ZAP sobre Juice Shop: 0 High, 2 Medium, 1 Informational, 93 endpoints"><figcaption>Informe real de <code>zap-baseline</code> (ZAP 2.17) sobre Juice Shop: 2 alertas Medium, 1 Informational, 93 endpoints recorridos. El HTML completo (<code>zap-report.html</code>) va como anexo.</figcaption></figure>
       <div class="say">ZAP exporta un informe HTML completo (Report › Generate HTML Report) que anexo como evidencia adicional.</div>
     </div></li>
   </ol>
@@ -302,7 +303,7 @@ sonar-scanner \
   -Dsonar.host.url=http://localhost:9000 \
   -Dsonar.login=&lt;TOKEN&gt;</pre></div>
       <p>En <b>Issues › Security</b> aparecen SQLi, XSS, inclusión de archivos, uso de MD5, credenciales embebidas.</p>
-      <figure><div class="pending"><b>Captura pendiente</b><span>Panel de Issues de SonarQube para DVWA, con el detalle por vulnerabilidad (tipo, archivo, línea, severidad).</span></div></figure>
+      <figure><img src="img/sonar-dvwa.png" alt="SonarQube sobre DVWA: 1 vulnerability critical, 61 security hotspots, 82 bugs, 3734 code smells"><figcaption>Análisis real de SonarQube sobre el código de DVWA: 61 security hotspots (2 de sql-injection, 2 de RCE, 7 de criptografía débil) y 1 vulnerability crítica (AES-ECB).</figcaption></figure>
     </div></li>
     <li><div class="step">
       <h3>Analizar Mutillidae</h3>
@@ -310,7 +311,14 @@ sonar-scanner \
 cd mutillidae
 sonar-scanner -Dsonar.projectKey=mutillidae -Dsonar.sources=. \
   -Dsonar.host.url=http://localhost:9000 -Dsonar.login=&lt;TOKEN&gt;</pre></div>
-      <figure><div class="pending"><b>Captura pendiente</b><span>Issues de SonarQube para Mutillidae.</span></div></figure>
+      <div class="tbl"><table>
+        <thead><tr><th>Proyecto</th><th>Vulnerabilities</th><th>Security Hotspots</th><th>Bugs</th><th>Code Smells</th></tr></thead>
+        <tbody>
+          <tr><td>DVWA</td><td>1 (CRITICAL)</td><td>61</td><td>82</td><td>3734</td></tr>
+          <tr><td>Mutillidae</td><td>1</td><td>116</td><td>349</td><td>4643</td></tr>
+        </tbody>
+      </table></div>
+      <p class="out">Resultados reales de SonarQube sobre el código fuente de ambos proyectos (<code>localhost:9000</code>).</p>
       <div class="say">SAST (SonarQube) localiza la causa en el código con archivo y línea; DAST (ZAP) prueba la app corriendo y confirma la explotabilidad. Se complementan.</div>
     </div></li>
   </ol>
@@ -343,10 +351,10 @@ sonar-scanner -Dsonar.projectKey=mutillidae -Dsonar.sources=. \
     <tbody>
       <tr><td>1 VMs</td><td>documentado</td><td>captura al arrancar la VM</td></tr>
       <tr><td>2 SQLi manual</td><td>payloads listos</td><td>UNION ejecutado en DVWA ✓</td></tr>
-      <tr><td>3 SQLMap + tarjetas</td><td>comandos listos</td><td>dump SQLMap de dvwa.users ✓ · credit_cards Mutillidae pendiente</td></tr>
+      <tr><td>3 SQLMap + tarjetas</td><td>comandos listos</td><td>dump dvwa.users ✓ · tarjetas Mutillidae ✓</td></tr>
       <tr><td>4 XSS</td><td>payloads y localizaciones</td><td>DOM XSS Juice Shop ✓ · alert DVWA pendiente</td></tr>
-      <tr><td>5 ZAP</td><td>procedimiento listo</td><td>alertas del scan</td></tr>
-      <tr><td>6 SonarQube</td><td>comandos listos · servidor corriendo ✓</td><td>Issues DVWA + Mutillidae</td></tr>
+      <tr><td>5 ZAP</td><td>procedimiento listo</td><td>scan Juice Shop + informe ✓</td></tr>
+      <tr><td>6 SonarQube</td><td>servidor corriendo ✓</td><td>Issues DVWA + Mutillidae ✓</td></tr>
     </tbody>
   </table></div>
   <p class="out">Las capturas marcadas <em>pendiente</em> se toman al correr cada prueba sobre la VM vulnerable (descarga del appliance de 5 GB en curso). Ninguna captura está inventada.</p>
